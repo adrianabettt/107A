@@ -2,98 +2,446 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Algoritmos Visuais - 3 Passos</title>
+    <title>Algoritmos Visuais</title>
     <style>
-        body { font-family: 'Comic Sans MS', sans-serif; text-align: center; background-color: #eef2f3; padding: 10px; }
-        .caixa { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 40px; border: 8px solid #2196f3; box-shadow: 0 10px 0 #1976d2; }
-        .placar { font-size: 32px; font-weight: bold; color: #1976d2; margin-bottom: 20px; background: #bbdefb; border-radius: 20px; padding: 10px; }
-        .grid { display: flex; justify-content: center; gap: 15px; margin: 25px 0; min-height: 140px; }
-        .item { width: 140px; height: 140px; background: #f8f9fa; border-radius: 25px; cursor: pointer; border: 5px solid #cfd8dc; overflow: hidden; transition: 0.3s; display: flex; align-items: center; justify-content: center; }
-        .item img { width: 85%; height: 85%; object-fit: contain; pointer-events: none; }
-        .item.selected { border-color: #ff9800; transform: rotate(-3deg) scale(1.1); box-shadow: 0 0 20px rgba(255,152,0,0.4); }
-        .btn { padding: 18px 60px; background: #4caf50; color: white; border: none; border-radius: 50px; font-size: 26px; cursor: pointer; font-weight: bold; box-shadow: 0 6px 0 #2e7d32; }
-        .btn:active { transform: translateY(4px); box-shadow: none; }
-        #pop { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 50px; border-radius: 40px; color: white; font-size: 40px; font-weight: bold; z-index: 100; text-align: center; width: 80%; border: 10px solid white; box-shadow: 0 0 100px rgba(0,0,0,0.5); }
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
 
-        /* Tela de nota final */
+        :root {
+            --azul: #1a73e8;
+            --azul-escuro: #1557b0;
+            --azul-claro: #e8f0fe;
+            --verde: #34a853;
+            --verde-escuro: #1e7e34;
+            --laranja: #fb8c00;
+            --vermelho: #e53935;
+            --cinza: #f1f3f4;
+            --texto: #202124;
+            --branco: #ffffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #e8f0fe 0%, #fce4ec 50%, #e8f5e9 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 24px 12px 40px;
+        }
+
+        /* ---- CABEÇALHO ---- */
+        .cabecalho {
+            width: 100%;
+            max-width: 640px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            gap: 10px;
+        }
+
+        .titulo-jogo {
+            font-family: 'Fredoka One', cursive;
+            font-size: 26px;
+            color: var(--azul);
+            letter-spacing: 0.5px;
+            text-shadow: 2px 2px 0 rgba(26,115,232,0.15);
+        }
+
+        /* ---- BARRA DE PROGRESSO ---- */
+        .barra-container {
+            width: 100%;
+            max-width: 640px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 50px;
+            padding: 6px 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .fase-label {
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--azul);
+            white-space: nowrap;
+        }
+
+        .barra-track {
+            flex: 1;
+            height: 12px;
+            background: #ddd;
+            border-radius: 50px;
+            overflow: hidden;
+        }
+
+        .barra-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--azul), var(--verde));
+            border-radius: 50px;
+            transition: width 0.5s cubic-bezier(.34,1.56,.64,1);
+        }
+
+        .fase-icones {
+            display: flex;
+            gap: 4px;
+        }
+
+        .fase-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #ddd;
+            border: 2px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            transition: 0.3s;
+        }
+
+        .fase-dot.completa { background: var(--verde); border-color: var(--verde-escuro); color: white; }
+        .fase-dot.atual    { background: var(--azul);  border-color: var(--azul-escuro);  color: white; }
+        .fase-dot.erro     { background: #ff7043;      border-color: #bf360c;             color: white; }
+
+        /* ---- CAIXA PRINCIPAL ---- */
+        .caixa {
+            width: 100%;
+            max-width: 640px;
+            background: var(--branco);
+            padding: 28px 24px 24px;
+            border-radius: 28px;
+            box-shadow: 0 8px 32px rgba(26,115,232,0.13), 0 2px 8px rgba(0,0,0,0.06);
+            border: 3px solid rgba(26,115,232,0.15);
+        }
+
+        .instrucao-wrap {
+            background: var(--azul-claro);
+            border-radius: 16px;
+            padding: 14px 18px;
+            margin-bottom: 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .instrucao-emoji { font-size: 28px; }
+
+        .instrucao-texto {
+            font-size: 19px;
+            font-weight: 800;
+            color: var(--azul-escuro);
+            line-height: 1.3;
+        }
+
+        .sub-instrucao {
+            font-size: 13px;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        /* ---- GRID DE IMAGENS ---- */
+        .grid {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin: 0 0 24px;
+            min-height: 150px;
+        }
+
+        .item-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .item-num {
+            font-family: 'Fredoka One', cursive;
+            font-size: 20px;
+            color: var(--azul);
+            width: 28px;
+            height: 28px;
+            background: var(--azul-claro);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .item {
+            width: 148px;
+            height: 148px;
+            background: var(--cinza);
+            border-radius: 20px;
+            cursor: pointer;
+            border: 4px solid #e0e0e0;
+            overflow: hidden;
+            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .item img {
+            width: 90%;
+            height: 90%;
+            object-fit: contain;
+            pointer-events: none;
+            transition: transform 0.2s;
+        }
+
+        .item:hover {
+            border-color: var(--azul);
+            box-shadow: 0 4px 16px rgba(26,115,232,0.2);
+            transform: translateY(-3px);
+        }
+
+        .item.selected {
+            border-color: var(--laranja);
+            box-shadow: 0 0 0 4px rgba(251,140,0,0.25), 0 6px 20px rgba(251,140,0,0.3);
+            transform: scale(1.07) rotate(-2deg);
+        }
+
+        .item.selected::after {
+            content: '✋';
+            position: absolute;
+            top: -12px;
+            right: -10px;
+            font-size: 24px;
+            filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.2));
+        }
+
+        /* ---- BOTÃO CONFIRMAR ---- */
+        .btn-row {
+            display: flex;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 16px 56px;
+            background: linear-gradient(135deg, var(--verde), #2e9e4f);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-family: 'Fredoka One', cursive;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 var(--verde-escuro), 0 8px 20px rgba(52,168,83,0.3);
+            transition: transform 0.15s, box-shadow 0.15s;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 0 var(--verde-escuro), 0 12px 24px rgba(52,168,83,0.35); }
+        .btn:active { transform: translateY(5px); box-shadow: 0 1px 0 var(--verde-escuro); }
+
+        /* ---- POPUP ---- */
+        #pop {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            padding: 32px 48px;
+            border-radius: 28px;
+            color: white;
+            font-family: 'Fredoka One', cursive;
+            font-size: 32px;
+            z-index: 100;
+            text-align: center;
+            max-width: 85%;
+            border: 6px solid white;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+            opacity: 0;
+            transition: opacity 0.2s, transform 0.3s cubic-bezier(.34,1.56,.64,1);
+        }
+
+        #pop.visivel {
+            display: block;
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* ---- TELA FINAL ---- */
         #telaFinal {
             display: none;
             position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(6px);
             z-index: 200;
             align-items: center;
             justify-content: center;
         }
+
         #telaFinal.visivel { display: flex; }
+
         .cartaoFinal {
             background: white;
-            border-radius: 40px;
-            padding: 50px 40px;
-            border: 10px solid #ff9800;
-            box-shadow: 0 0 60px rgba(255,152,0,0.7);
-            max-width: 460px;
+            border-radius: 36px;
+            padding: 44px 36px 36px;
+            max-width: 420px;
             width: 90%;
             text-align: center;
-            animation: aparecer 0.5s ease;
+            animation: aparecer 0.5s cubic-bezier(.34,1.56,.64,1) both;
+            position: relative;
+            overflow: hidden;
         }
+
+        .cartaoFinal::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 8px;
+            background: linear-gradient(90deg, var(--azul), var(--verde), var(--laranja));
+        }
+
         @keyframes aparecer {
-            from { transform: scale(0.5); opacity: 0; }
-            to   { transform: scale(1);   opacity: 1; }
+            from { transform: scale(0.4) rotate(-8deg); opacity: 0; }
+            to   { transform: scale(1)   rotate(0deg);  opacity: 1; }
         }
-        .troféu    { font-size: 90px; margin-bottom: 8px; }
-        .estrelas  { font-size: 48px; letter-spacing: 4px; margin-bottom: 8px; }
-        .tituloFinal { font-size: 34px; font-weight: bold; color: #ff9800; margin-bottom: 6px; }
-        .notaFinal   { font-size: 90px; font-weight: bold; color: #4caf50; line-height: 1; margin: 8px 0; }
-        .legendaNota { font-size: 20px; color: #777; margin-bottom: 16px; }
-        .mensagemFinal { font-size: 24px; color: #1976d2; font-weight: bold; margin-bottom: 28px; }
+
+        .trofeu    { font-size: 80px; margin-bottom: 4px; }
+        .estrelas  { font-size: 40px; letter-spacing: 6px; margin-bottom: 10px; }
+
+        .titulo-final {
+            font-family: 'Fredoka One', cursive;
+            font-size: 30px;
+            color: var(--laranja);
+            margin-bottom: 6px;
+        }
+
+        .nota-final {
+            font-family: 'Fredoka One', cursive;
+            font-size: 96px;
+            line-height: 1;
+            margin: 4px 0 2px;
+            background: linear-gradient(135deg, var(--azul), var(--verde));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .legenda-nota { font-size: 16px; color: #999; font-weight: 700; margin-bottom: 8px; }
+
+        .acertos-row {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .acerto-badge {
+            padding: 4px 14px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .badge-ok  { background: #e8f5e9; color: var(--verde-escuro); }
+        .badge-err { background: #fce4ec; color: var(--vermelho); }
+
+        .mensagem-final {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--azul);
+            margin-bottom: 26px;
+        }
+
         .btnReiniciar {
-            padding: 16px 50px;
-            background: #2196f3;
+            padding: 15px 48px;
+            background: linear-gradient(135deg, var(--azul), var(--azul-escuro));
             color: white;
             border: none;
             border-radius: 50px;
+            font-family: 'Fredoka One', cursive;
             font-size: 22px;
             cursor: pointer;
-            font-weight: bold;
-            box-shadow: 0 6px 0 #1565c0;
+            box-shadow: 0 6px 0 #0d47a1, 0 8px 20px rgba(26,115,232,0.3);
+            transition: transform 0.15s, box-shadow 0.15s;
         }
-        .btnReiniciar:active { transform: translateY(4px); box-shadow: none; }
+
+        .btnReiniciar:hover { transform: translateY(-2px); }
+        .btnReiniciar:active { transform: translateY(5px); box-shadow: 0 1px 0 #0d47a1; }
+
+        /* ---- RODAPÉ ---- */
+        footer {
+            margin-top: 20px;
+            font-size: 13px;
+            color: #888;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        @media (max-width: 500px) {
+            .item { width: 110px; height: 110px; }
+            .grid { gap: 10px; }
+            .btn  { font-size: 20px; padding: 14px 40px; }
+            .instrucao-texto { font-size: 16px; }
+        }
     </style>
 </head>
 <body>
 
+    <div class="cabecalho">
+        <div class="titulo-jogo">🧩 Algoritmos Visuais</div>
+        <div class="fase-icones" id="faseIcones"></div>
+    </div>
+
+    <div class="barra-container">
+        <span class="fase-label" id="faseLabel">Fase 1/4</span>
+        <div class="barra-track">
+            <div class="barra-fill" id="barraFill" style="width:0%"></div>
+        </div>
+    </div>
+
     <div class="caixa">
-        <div class="placar">NOTA: <span id="nota">0</span></div>
-        <h2 id="instrucao">CARREGANDO...</h2>
+        <div class="instrucao-wrap">
+            <span class="instrucao-emoji" id="instrucaoEmoji">🤔</span>
+            <div class="instrucao-texto" id="instrucao">CARREGANDO...</div>
+        </div>
+        <div class="sub-instrucao">Toque em duas imagens para trocar a ordem 🔄</div>
         <div class="grid" id="container"></div>
-        <button class="btn" onclick="checar()">OK! ✅</button>
+        <div class="btn-row">
+            <button class="btn" onclick="checar()">CONFIRMAR ✅</button>
+        </div>
     </div>
 
     <div id="pop"></div>
 
-    <!-- ===== TELA DE NOTA FINAL ===== -->
+    <!-- TELA FINAL -->
     <div id="telaFinal">
         <div class="cartaoFinal">
-            <div class="troféu">🏆</div>
-            <div class="estrelas">⭐⭐⭐⭐⭐</div>
-            <div class="tituloFinal">PARABÉNS!</div>
-            <div class="notaFinal" id="notaFinalValor">10</div>
-            <div class="legendaNota">sua nota</div>
-            <div class="mensagemFinal" id="mensagemFinal">VOCÊ É FERA! 🎉</div>
+            <div class="trofeu" id="trofeu">🏆</div>
+            <div class="estrelas" id="estrelas">⭐⭐⭐⭐⭐</div>
+            <div class="titulo-final">RESULTADO FINAL!</div>
+            <div class="nota-final" id="notaFinalValor">10</div>
+            <div class="legenda-nota">sua nota</div>
+            <div class="acertos-row" id="acertosRow"></div>
+            <div class="mensagem-final" id="mensagemFinal">VOCÊ É FERA! 🎉</div>
             <button class="btnReiniciar" onclick="reiniciar()">JOGAR DE NOVO 🔄</button>
         </div>
     </div>
 
+    <footer>Profª Adriana Bett Terebinto | São Lourenço do Oeste - SC</footer>
+
     <script>
-        let fase = 1;
-        let nota = 0;
-        let sel  = null;
+        const TOTAL_FASES = 4;
 
         const banco = {
             1: {
                 t: "COMO FAZER UM OMELETE?",
+                emoji: "🍳",
                 certa: [
                     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRd1wgCGhQwkysoz7N5th1d0zAyBH2Slp5RVw&s",
                     "https://img.freepik.com/vetores-premium/bater-icone-de-ovo-processo-de-cozimento-ou-cozimento-dos-desenhos-animados_81894-8718.jpg",
@@ -102,23 +450,25 @@
             },
             2: {
                 t: "SUCO DE LARANJA?",
+                emoji: "🍊",
                 certa: [
                     "https://preview.free3d.com/img/2017/09/1871866224208512967/6q6wj9y1.jpg",
-                     "https://thumbs.dreamstime.com/b/espremendo-laranja-12314843.jpg",
-					 "https://www.shutterstock.com/image-photo/orange-juice-clear-glass-bottle-600nw-2758681661.jpg"
-                   
+                    "https://thumbs.dreamstime.com/b/espremendo-laranja-12314843.jpg",
+                    "https://www.shutterstock.com/image-photo/orange-juice-clear-glass-bottle-600nw-2758681661.jpg"
                 ]
             },
             3: {
                 t: "ROUPA NO VARAL!",
+                emoji: "👕",
                 certa: [
                     "https://img.freepik.com/vetores-gratis/degraus-de-lavanderia-de-roupas-sujas_74855-15396.jpg?semt=ais_hybrid&w=740&q=80",
-                     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTYazci5C93RQOWpTE17lXOSE3n5Ql7VdUgxw&s",
-					 "https://media.istockphoto.com/id/1776948262/pt/vetorial/clothes-hang-on-laundry-rope-clothesline-and-dry-concept-vector-flat-graphic-design.jpg?s=612x612&w=0&k=20&c=2mR35f6mOTqM7i_1OOQY_CKQBT68sTQyg4whoAtb8I8=",
+                    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTYazci5C93RQOWpTE17lXOSE3n5Ql7VdUgxw&s",
+                    "https://media.istockphoto.com/id/1776948262/pt/vetorial/clothes-hang-on-laundry-rope-clothesline-and-dry-concept-vector-flat-graphic-design.jpg?s=612x612&w=0&k=20&c=2mR35f6mOTqM7i_1OOQY_CKQBT68sTQyg4whoAtb8I8="
                 ]
             },
             4: {
                 t: "BAILARINA!",
+                emoji: "🩰",
                 certa: [
                     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcREV2zjab1B2Ck8F8_Th5RY6eDVjgq9KDsqHA&s",
                     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTzQfgW0HNB0My5_OhDhkx92KO2N5sSLWa51Q&s",
@@ -127,18 +477,57 @@
             }
         };
 
-        /* ---------- monta a fase ---------- */
+        let fase      = 1;
+        let sel       = null;
+        let resultados = [];   // Array de booleanos: true = acertou, false = errou
+
+        /* ---- atualiza barra e dots ---- */
+        function atualizarUI() {
+            const pct = ((fase - 1) / TOTAL_FASES) * 100;
+            document.getElementById('barraFill').style.width = pct + '%';
+            document.getElementById('faseLabel').innerText = `Fase ${fase}/${TOTAL_FASES}`;
+
+            const dotsEl = document.getElementById('faseIcones');
+            dotsEl.innerHTML = '';
+            for (let i = 1; i <= TOTAL_FASES; i++) {
+                const d = document.createElement('div');
+                d.className = 'fase-dot';
+                if (i < fase) {
+                    const acertou = resultados[i - 1];
+                    d.classList.add(acertou ? 'completa' : 'erro');
+                    d.innerText = acertou ? '✓' : '✗';
+                } else if (i === fase) {
+                    d.classList.add('atual');
+                    d.innerText = i;
+                } else {
+                    d.innerText = i;
+                }
+                dotsEl.appendChild(d);
+            }
+        }
+
+        /* ---- monta a fase ---- */
         function montar() {
+            sel = null;
             const c = document.getElementById('container');
             c.innerHTML = "";
             document.getElementById('instrucao').innerText = banco[fase].t;
+            document.getElementById('instrucaoEmoji').innerText = banco[fase].emoji;
 
+            // embaralha garantindo ordem diferente da correta
             let bagunca;
             do {
                 bagunca = [...banco[fase].certa].sort(() => Math.random() - 0.5);
             } while (JSON.stringify(bagunca) === JSON.stringify(banco[fase].certa));
 
-            bagunca.forEach(url => {
+            bagunca.forEach((url, idx) => {
+                const wrap = document.createElement('div');
+                wrap.className = 'item-wrap';
+
+                const num = document.createElement('div');
+                num.className = 'item-num';
+                num.innerText = idx + 1;
+
                 const div = document.createElement('div');
                 div.className = 'item';
                 const img = document.createElement('img');
@@ -149,71 +538,116 @@
                     if (!sel) {
                         sel = div;
                         div.classList.add('selected');
+                    } else if (sel === div) {
+                        div.classList.remove('selected');
+                        sel = null;
                     } else {
-                        let temp = div.querySelector('img').src;
+                        // troca as imagens
+                        const tempSrc = div.querySelector('img').src;
                         div.querySelector('img').src = sel.querySelector('img').src;
-                        sel.querySelector('img').src = temp;
+                        sel.querySelector('img').src = tempSrc;
                         sel.classList.remove('selected');
                         sel = null;
                     }
                 };
-                c.appendChild(div);
+
+                wrap.appendChild(num);
+                wrap.appendChild(div);
+                c.appendChild(wrap);
             });
+
+            atualizarUI();
         }
 
-        /* ---------- verifica a resposta ---------- */
+        /* ---- verifica a resposta ---- */
         function checar() {
             const atuais   = Array.from(document.querySelectorAll('.item img')).map(img => img.src);
             const corretas = banco[fase].certa;
+            const acertou  = JSON.stringify(atuais) === JSON.stringify(corretas);
 
-            if (JSON.stringify(atuais) === JSON.stringify(corretas)) {
-                nota += 2.5;
-                document.getElementById('nota').innerText = nota;
+            resultados.push(acertou);
 
-                if (fase < 4) {
-                    alerta("MUITO BEM! 🌟", "#4caf50");
-                    fase++;
-                    setTimeout(montar, 2000);
+            if (fase < TOTAL_FASES) {
+                if (acertou) {
+                    alerta("MUITO BEM! 🌟", "#34a853");
                 } else {
-                    /* ===== ÚLTIMA FASE CONCLUÍDA → mostra tela final ===== */
-                    setTimeout(mostrarTelaFinal, 800);
+                    alerta("ORDEM ERRADA! PRÓXIMA FASE ➡️", "#fb8c00");
                 }
+                fase++;
+                setTimeout(() => { montar(); atualizarUI(); }, 2000);
             } else {
-                alerta("ESTÁ FORA DE ORDEM! TENTE DE NOVO ❌", "#f44336");
+                // última fase: mostra tela final
+                setTimeout(mostrarTelaFinal, acertou ? 600 : 1200);
+                if (!acertou) alerta("ORDEM ERRADA! VAMOS VER SUA NOTA...", "#fb8c00");
             }
         }
 
-        /* ---------- exibe tela de encerramento ---------- */
+        /* ---- calcula nota ---- */
+        function calcularNota() {
+            const acertos = resultados.filter(Boolean).length;
+            return (acertos / TOTAL_FASES * 10).toFixed(1).replace('.0', '');
+        }
+
+        /* ---- tela final ---- */
         function mostrarTelaFinal() {
+            const acertos = resultados.filter(Boolean).length;
+            const erros   = TOTAL_FASES - acertos;
+            const nota    = calcularNota();
+
             document.getElementById('notaFinalValor').innerText = nota;
 
-            let msg;
-            if      (nota === 10)  msg = "VOCÊ É FERA! 🎉";
-            else if (nota >= 7.5)  msg = "MUITO BOM! 👏";
-            else if (nota >= 5)    msg = "BOM TRABALHO! 😊";
-            else                   msg = "CONTINUE TENTANDO! 💪";
+            // trofeu e estrelas por desempenho
+            const trofeus   = ['😢','😊','🥈','🥇','🏆'];
+            const estrelaQt = [1, 2, 3, 4, 5];
+            const nivel     = acertos; // 0 a 4
 
-            document.getElementById('mensagemFinal').innerText = msg;
+            document.getElementById('trofeu').innerText   = trofeus[nivel];
+            document.getElementById('estrelas').innerText = '⭐'.repeat(estrelaQt[nivel]);
+
+            // badges de acertos/erros
+            const row = document.getElementById('acertosRow');
+            row.innerHTML = '';
+            if (acertos > 0) {
+                const b = document.createElement('span');
+                b.className = 'acerto-badge badge-ok';
+                b.innerText = `✓ ${acertos} acerto${acertos > 1 ? 's' : ''}`;
+                row.appendChild(b);
+            }
+            if (erros > 0) {
+                const b = document.createElement('span');
+                b.className = 'acerto-badge badge-err';
+                b.innerText = `✗ ${erros} erro${erros > 1 ? 's' : ''}`;
+                row.appendChild(b);
+            }
+
+            const msgs = [
+                "NÃO DESISTA! TENTE DE NOVO 💪",
+                "VOCÊ ESTÁ MELHORANDO! 😊",
+                "BOM TRABALHO! 👏",
+                "QUASE PERFEITO! 🌟",
+                "INCRÍVEL! NOTA 10! 🎉"
+            ];
+            document.getElementById('mensagemFinal').innerText = msgs[nivel];
+
             document.getElementById('telaFinal').classList.add('visivel');
         }
 
-        /* ---------- reinicia o jogo ---------- */
+        /* ---- reinicia ---- */
         function reiniciar() {
-            fase = 1;
-            nota = 0;
-            sel  = null;
-            document.getElementById('nota').innerText = 0;
+            fase       = 1;
+            sel        = null;
+            resultados = [];
             document.getElementById('telaFinal').classList.remove('visivel');
             montar();
         }
 
-        /* ---------- popup rápido ---------- */
-        function alerta(t, c) {
+        /* ---- popup rápido ---- */
+        function alerta(texto, cor) {
             const p = document.getElementById('pop');
-            p.innerText = t;
-            p.style.backgroundColor = c;
-            p.style.display = 'block';
-            setTimeout(() => p.style.display = 'none', 2000);
+            p.innerText = texto;
+            p.style.backgroundColor = cor;
+            p.classList.add('visivel');
+            setTimeout(() => p.classList.remove('visivel'), 2000);
         }
 
         montar();
